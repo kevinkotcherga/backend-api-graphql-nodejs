@@ -3,13 +3,15 @@ import datasource from './utils';
 import { ApolloServer } from "apollo-server";
 import { buildSchema } from "type-graphql";
 import { WildersResolver } from "./resolvers/Wilders";
+import { SkillsResolver } from "./resolvers/Skills";
+import { UpvotesResolver } from "./resolvers/Upvotes";
 
 const PORT = 5000;
 
 async function bootstrap(): Promise<void> {
   // ... Building schema here
   const schema = await buildSchema({
-  resolvers: [WildersResolver],
+  resolvers: [WildersResolver, SkillsResolver, UpvotesResolver],
 });
 
   // Create the GraphQL server

@@ -1,140 +1,58 @@
-import datasource from '../utils';
-import { Request, Response } from 'express';
-import { Skill } from '../entities/Skill';
+import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
+import { Skill } from "../entities/Skill";
+import datasource from "../utils";
 
-export default {
-	//
-	// ORM create
-	//
-	create: (req: Request, res: Response): void => {
-		const repository = datasource.getRepository(Skill);
+@Resolver()
+export class SkillsResolver {
+  @Mutation(() => Skill)
+  async createSkill(@Arg("name") name: string): Promise<Skill> {
+    return await datasource.getRepository(Skill).save({ name });
+  }
 
-		repository.save(req.body).then(
-			() => {
-				console.log('Created');
-			},
-			() => {
-				console.log('Error');
-			},
-		);
-		res.json({ message: 'Created' });
-	},
+  // @Mutation(() => Skill, { nullable: true })
+  // async updateSkill(
+  //   @Arg("id", () => ID) id: number,
+  //   @Arg("name", { nullable: true }) name: string | null
+  // ): Promise<Skill | null> {
+  //   const skill = await datasource
+  //     .getRepository(Skill)
+  //     .findOne({ where: { id } });
 
-	//
-	// SQL create
-	//
+  //   if (skill === null) {
+  //     return null;
+  //   }
 
-	// create: (req: Request, res: Response) => {
-	// 	const repository = datasource.getRepository('Skill');
+  //   if (name != null) {
+  //     skill.name = name;
+  //   }
 
-	// 	repository
-	// 		.query('INSERT INTO skill(name) VALUES (?)', [req.body.name])
-	// 		.then(
-	// 			id => {
-	// 				repository
-	// 					.query('SELECT * FROM skill WHERE id=?', [id])
-	// 					.then(data => {
-	// 						res.json(data[0]);
-	// 					});
-	// 			},
-	// 			err => {
-	// 				console.error('Error: ', err);
-	// 				res.json({ success: false });
-	// 			},
-	// 		);
-	// },
+  //   return await datasource.getRepository(Skill).save(skill);
+  // }
 
-	//
-	// ORM findAll
-	//
+  @Mutation(() => Skill, { nullable: true })
+  async deleteSkill(@Arg("id", () => ID) id: number): Promise<Skill | null> {
+    const skill = await datasource
+      .getRepository(Skill)
+      .findOne({ where: { id } });
 
-	findAll: async (req: Request, res: Response): Promise<void> => {
-		const repository = datasource.getRepository(Skill);
-		const skills = await repository.find({
-			relations: ['upvote', 'upvote.wilder'],
-		});
-		res.json(skills);
-	},
+    if (skill === null) {
+      return null;
+    }
 
-	//
-	// SQL findAll
-	//
+    return await datasource.getRepository(Skill).remove(skill);
+  }
 
-	// findAll: (req: Request, res: Response) => {
-	// 	const repository = datasource.getRepository('Skill');
+  @Query(() => [Skill])
+  async skills(): Promise<Skill[]> {
+    return await datasource
+      .getRepository(Skill)
+      .find({ relations: ["upvotes", "upvotes.wilder"] });
+  }
 
-	// 	repository.query('SELECT * FROM skill').then(data => {
-	// 		res.json(data);
-	// 	});
-	// },
-
-	//
-	// ORM find
-	//
-
-	find: (req: Request, res: Response): void => {
-		const repository = datasource.getRepository(Skill);
-		const skillId = req.params.skillId;
-		repository.findOneBy({ id: Number(skillId) }).then(
-			data => {
-				res.json(data);
-			},
-			err => {
-				console.error('Error: ', err);
-				res.json({ success: false });
-			},
-		);
-	},
-
-	//
-	// SQL find
-	//
-
-	// find: (req: Request, res: Response) => {
-	// 	const repository = datasource.getRepository('Skill');
-	// 	const skillId = req.params.skillId;
-	// 	repository.query('SELECT * FROM skill WHERE id=?', [skillId]).then(data => {
-	// 		res.json(data);
-	// 	});
-	// },
-
-	//
-	// ORM update
-	//
-
-	update: async (req: Request, res: Response): Promise<void> => {
-		const repository = datasource.getRepository('Skill');
-		const skillId = req.params.skillId;
-		const skillName = req.body.name;
-		await repository.findOneByOrFail({ id: Number(skillId) });
-		const updatedSkill = repository.save(skillName, { reload: true });
-		res.json(updatedSkill);
-	},
-
-	//
-	// SQL update
-	//
-
-	// update: (req: Request, res: Response) => {
-	// 	const repository = datasource.getRepository('Skill');
-	// 	const skillId = req.params.skillId;
-	// 	const skillName = req.body.name;
-	// 	repository
-	// 		.query('UPDATE skill SET name=? WHERE id=?', [skillName, skillId])
-	// 		.then(data => {
-	// 			res.json(data);
-	// 		});
-	// },
-
-	//
-	// SQL update
-	//
-
-	delete: async (req: Request, res: Response): Promise<void> => {
-		const repository = datasource.getRepository('Skill');
-		const skillId = req.params.skillId;
-		await repository.query('DELETE FROM skill WHERE id=?', [skillId]).then(data => {
-			res.json(data);
-		});
-	},
-};
+  @Query(() => Skill, { nullable: true })
+  async skill(@Arg("id", () => ID) id: number): Promise<Skill | null> {
+    return await datasource
+      .getRepository(Skill)
+      .findOne({ where: { id }, relations: ["upvotes", "upvotes.wilder"] });
+  }
+}
